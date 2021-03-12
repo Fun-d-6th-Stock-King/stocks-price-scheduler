@@ -16,7 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "no1.stocks_price")
+@Table(name = "stocks_price")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -46,4 +46,31 @@ public class StocksPrice implements Serializable {
 	
 	@Column(name = "yield_y1")
 	private BigDecimal yieldY1;
+	
+	@Column(name = "price_y3")
+	private BigDecimal priceY3;
+	
+	@Column(name = "date_y3")
+	private LocalDateTime dateY3;
+	
+	@Column(name = "yield_y3")
+	private BigDecimal yieldY3;
+	
+	@Column(name = "price_y5")
+	private BigDecimal priceY5;
+	
+	@Column(name = "date_y5")
+	private LocalDateTime dateY5;
+	
+	@Column(name = "yield_y5")
+	private BigDecimal yieldY5;
+	
+	@Column(name = "price_y10")
+	private BigDecimal priceY10;
+	
+	@Column(name = "date_y10")
+	private LocalDateTime dateY10;
+	
+	@Column(name = "yield_y10")
+	private BigDecimal yieldY10;
 }
