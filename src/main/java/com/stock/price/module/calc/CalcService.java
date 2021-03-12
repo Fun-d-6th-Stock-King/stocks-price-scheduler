@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,8 +31,8 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 
-//	@Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
-	@Scheduled(fixedRate = 10000000) // 테스트용
+	@Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
+//	@Scheduled(fixedRate = 1000000000) // 테스트용
 	public List<Stocks> getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
 		
@@ -39,12 +40,11 @@ public class CalcService {
 
 		List<Stocks> stockList = stockRepository.findAllByMarket("KS")
 			.orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
-
-		stockList = stockList.subList(0, 20); // 10개만 테스트
+		
+//		stockList = stockList.subList(0, 10); // 10개만 테스트
 
 		for (Stocks target : stockList) {
-			StocksPrice stocksPrice = stocksPriceRepository
-				.findByStocksId(target.getId()).orElse(new StocksPrice());
+			StocksPrice stocksPrice = Optional.ofNullable(target.getStocksPrice()).orElse(new StocksPrice());
 
 			String stockCode = target.getCode() + "." + target.getMarket();
 
@@ -74,6 +74,7 @@ public class CalcService {
 				stocksPrice.setYieldY1(yield);
 			} catch (Exception e) {
 				log.error("{} / {} year fail", stockCode, 1);
+				continue;
 			}
 			
 			// 3년전
@@ -94,6 +95,7 @@ public class CalcService {
 				stocksPrice.setYieldY3(yield);
 			} catch (Exception e) {
 				log.error("{} / {} year fail", stockCode, 3);
+				continue;
 			}
 			
 			// 5년전 
@@ -114,6 +116,7 @@ public class CalcService {
 				stocksPrice.setYieldY5(yield);
 			} catch (Exception e) {
 				log.error("{} / {} year fail", stockCode, 5);
+				continue;
 			}
 			
 			// 10년전 
@@ -134,6 +137,7 @@ public class CalcService {
 				stocksPrice.setYieldY10(yield);
 			} catch (Exception e) {
 				log.error("{} / {} year fail", stockCode, 10);
+				continue;
 			}
 			
 			stockPriceList.add(stocksPrice);
@@ -141,7 +145,7 @@ public class CalcService {
 		
 		stocksPriceRepository.saveAll(stockPriceList);
 
-		return stockList;
+		return null;
 	}
 
 	public static Calendar convertCal(LocalDate localDate) {

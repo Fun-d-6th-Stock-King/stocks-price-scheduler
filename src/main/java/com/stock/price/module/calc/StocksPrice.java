@@ -6,9 +6,12 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -28,7 +31,7 @@ public class StocksPrice implements Serializable {
 	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-
+	
 	@Column(name = "stocks_id")
 	private int stocksId;
 
@@ -73,4 +76,8 @@ public class StocksPrice implements Serializable {
 	
 	@Column(name = "yield_y10")
 	private BigDecimal yieldY10;
+	
+	@OneToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "stocks_id", insertable = false, updatable = false)
+	private Stocks stocks;
 }
