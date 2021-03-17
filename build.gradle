@@ -1,19 +1,10 @@
-buildscript {
-    ext {
-        springBootVersion = '2.3.0.RELEASE'
-    }
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-    }
+plugins {
+    id 'org.springframework.boot' version '2.3.0.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+    id 'eclipse'
+    id 'org.ec4j.editorconfig' version '0.0.3'
 }
-
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
 
 group = 'com.stock'
 version = '0.0.1-SNAPSHOT'
@@ -29,6 +20,15 @@ dependencies {
     
     runtimeOnly 'org.postgresql:postgresql'
     compileOnly('org.projectlombok:lombok')
+    annotationProcessor 'org.projectlombok:lombok'
     
     compile('com.yahoofinance-api:YahooFinanceAPI:3.15.0')
 }
+
+// [start] coding convention 
+editorconfig {
+  excludes = ['build', 'gradle', 'gradlew', 'README.md', '.editorconfig']
+}
+
+check.dependsOn editorconfigCheck
+// [end] coding convention

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StocksRepository extends JpaRepository<Stocks, Integer> {
-	
 	public Optional<List<Stocks>> findAllByMarket(String market);
 
 }

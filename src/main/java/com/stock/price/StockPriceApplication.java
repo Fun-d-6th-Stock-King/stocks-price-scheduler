@@ -10,7 +10,6 @@ public class StockPriceApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(StockPriceApplication.class, args);
-		
 	}
 
 }
