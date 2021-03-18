@@ -17,9 +17,16 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
     compile('org.springframework.boot:spring-boot-starter-jdbc')
     
+    // postgresql
     runtimeOnly 'org.postgresql:postgresql'
+
+    // lombok
     compileOnly('org.projectlombok:lombok')
     annotationProcessor 'org.projectlombok:lombok'
     
+    // yahoofinance-api
     compile('com.yahoofinance-api:YahooFinanceAPI:3.15.0')
+    
+    // logback
+    implementation group: 'org.logback-extensions', name: 'logback-ext-spring', version: '0.1.5'
 }
