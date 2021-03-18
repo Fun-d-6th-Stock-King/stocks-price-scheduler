@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StocksPriceRepository extends JpaRepository<StocksPrice, Integer> {
 
-	public Optional<StocksPrice> findByStocksId(int stocksId);
+    public Optional<StocksPrice> findByStocksId(int stocksId);
 }

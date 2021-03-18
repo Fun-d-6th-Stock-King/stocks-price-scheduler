@@ -13,27 +13,23 @@ import javax.sql.DataSource;
 @RequiredArgsConstructor
 @Configuration
 public class DataSourceConfiguration {
-	private static final String PROPERTIES = "spring.datasource.hikari";
+    private static final String PROPERTIES = "spring.datasource.hikari";
 
-	public static final String MASTER_DATASOURCE = "dataSource";
-	public static final String READER_DATASOURCE = "readerDataSource";
+    public static final String MASTER_DATASOURCE = "dataSource";
+    public static final String READER_DATASOURCE = "readerDataSource";
 
-	@Bean(MASTER_DATASOURCE)
-	@Primary
-	@ConfigurationProperties(prefix = PROPERTIES)
-	public DataSource dataSource() {
-		return DataSourceBuilder.create()
-			.type(HikariDataSource.class)
-			.build();
-	}
+    @Bean(MASTER_DATASOURCE)
+    @Primary
+    @ConfigurationProperties(prefix = PROPERTIES)
+    public DataSource dataSource() {
+        return DataSourceBuilder.create().type(HikariDataSource.class).build();
+    }
 
-	@Bean(READER_DATASOURCE)
-	@ConfigurationProperties(prefix = PROPERTIES)
-	public DataSource readerDataSource() {
-		HikariDataSource hikariDataSource = DataSourceBuilder.create()
-			.type(HikariDataSource.class)
-			.build();
-		hikariDataSource.setReadOnly(true);
-		return hikariDataSource;
-	}
+    @Bean(READER_DATASOURCE)
+    @ConfigurationProperties(prefix = PROPERTIES)
+    public DataSource readerDataSource() {
+        HikariDataSource hikariDataSource = DataSourceBuilder.create().type(HikariDataSource.class).build();
+        hikariDataSource.setReadOnly(true);
+        return hikariDataSource;
+    }
 }
