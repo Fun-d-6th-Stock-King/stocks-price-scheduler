@@ -3,7 +3,6 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'java'
     id 'eclipse'
-    id 'org.ec4j.editorconfig' version '0.0.3'
 }
 
 group = 'com.stock'
@@ -24,11 +23,3 @@ dependencies {
     
     compile('com.yahoofinance-api:YahooFinanceAPI:3.15.0')
 }
-
-// [start] coding convention 
-editorconfig {
-  excludes = ['build', 'gradle', 'gradlew', 'README.md', '.editorconfig']
-}
-
-check.dependsOn editorconfigCheck
-// [end] coding convention
