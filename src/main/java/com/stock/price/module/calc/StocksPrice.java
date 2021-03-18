@@ -77,7 +77,7 @@ public class StocksPrice implements Serializable {
     @Column(name = "yield_y10")
     private BigDecimal yieldY10;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne
     @JoinColumn(name = "stocks_id", insertable = false, updatable = false)
     private Stocks stocks;
 }

@@ -57,6 +57,9 @@ public class Stocks implements Serializable {
     @Column(name = "market")
     private String market;
 
-    @OneToOne(fetch = FetchType.EAGER, mappedBy = "stocks")
+    @OneToOne(mappedBy = "stocks")
     private StocksPrice stocksPrice;
+    
+    @OneToOne(mappedBy = "stocks")
+    private OldStock oldStock;
 }

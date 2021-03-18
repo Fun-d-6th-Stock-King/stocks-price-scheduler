@@ -30,16 +30,19 @@ public class CalcService {
 
     @Autowired
     private StocksPriceRepository stocksPriceRepository;
+    
+    @Autowired
+    private OldStockRepository oldStockRepository;
 
     @Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
     // @Scheduled(fixedRate = 1000000000) // 테스트용
-    public List<Stocks> getStockList() throws Exception {
+    public List<Stocks> collectStockPrice() throws Exception {
         LocalDate now = LocalDate.now();
 
         List<StocksPrice> stockPriceList = new ArrayList<>();
 
-        List<Stocks> stockList = stockRepository.findAllByMarket("KS")
-                .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+        List<Stocks> stockList = stockRepository.findAll();
+//                .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
 
         // stockList = stockList.subList(0, 10); // 10개만 테스트
 
@@ -72,7 +75,6 @@ public class CalcService {
                 stocksPrice.setYieldY1(yield);
             } catch (Exception e) {
                 log.error("{} / {} year fail", stockCode, 1);
-                continue;
             }
 
             // 3년전
@@ -91,7 +93,6 @@ public class CalcService {
                 stocksPrice.setYieldY3(yield);
             } catch (Exception e) {
                 log.error("{} / {} year fail", stockCode, 3);
-                continue;
             }
 
             // 5년전
@@ -110,7 +111,6 @@ public class CalcService {
                 stocksPrice.setYieldY5(yield);
             } catch (Exception e) {
                 log.error("{} / {} year fail", stockCode, 5);
-                continue;
             }
 
             // 10년전
@@ -129,7 +129,6 @@ public class CalcService {
                 stocksPrice.setYieldY10(yield);
             } catch (Exception e) {
                 log.error("{} / {} year fail", stockCode, 10);
-                continue;
             }
 
             stockPriceList.add(stocksPrice);
@@ -137,7 +136,32 @@ public class CalcService {
 
         stocksPriceRepository.saveAll(stockPriceList);
 
-        return null;
+        this.saveStockPrice(stockPriceList);
+        
+        return stockList;
+    }
+    
+//    @Scheduled(fixedRate = 1000000000)
+    public void saveStockPrice(List<StocksPrice> stocksPriceList) {
+        List<OldStock> oldStockList = new ArrayList<>();
+        stocksPriceList = Optional.ofNullable(stocksPriceList)
+                .orElse(stocksPriceRepository.findAll());
+        
+        stocksPriceList.stream().forEach(vo -> {
+            OldStock oldStock = Optional
+                    .ofNullable(vo.getStocks().getOldStock())
+                    .orElse(new OldStock());
+            oldStock.setCode(vo.getStocks().getCode());
+            oldStock.setCompany(vo.getStocks().getCompany());
+            oldStock.setCurPrice(vo.getPrice());
+            oldStock.setOneYear(vo.getPriceY1());
+            oldStock.setFiveYear(vo.getPriceY5());
+            oldStock.setTenYear(vo.getPriceY10());
+            oldStock.setStocksId(vo.getStocksId());
+            oldStockList.add(oldStock);
+        });
+        
+        oldStockRepository.saveAll(oldStockList);
     }
 
     public static Calendar convertCal(LocalDate localDate) {

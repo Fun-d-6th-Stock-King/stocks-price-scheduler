@@ -28,4 +28,5 @@ spring:
 ---
 spring:
   profiles: production
-  
+  jpa:
+    show-sql: false
