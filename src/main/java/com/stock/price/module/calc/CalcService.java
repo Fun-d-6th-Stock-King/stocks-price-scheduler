@@ -44,7 +44,7 @@ public class CalcService {
 		List<Stocks> stockList = stockRepository.findAllByMarket("KS")
 			.orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
 		
-		stockList = stockList.subList(0, 10); // 10개만 테스트
+//		stockList = stockList.subList(0, 10); // 10개만 테스트
 
 		for (Stocks target : stockList) {
 			StocksPrice stocksPrice = Optional.ofNullable(target.getStocksPrice()).orElse(new StocksPrice());
