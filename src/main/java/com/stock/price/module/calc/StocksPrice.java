@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,15 +15,21 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "stocks_price")
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class StocksPrice implements Serializable {
 
 	private static final long serialVersionUID = -1293146290479381252L;
@@ -76,6 +83,10 @@ public class StocksPrice implements Serializable {
 	
 	@Column(name = "yield_y10")
 	private BigDecimal yieldY10;
+	
+    @LastModifiedDate
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate;
 	
 	@OneToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "stocks_id", insertable = false, updatable = false)
