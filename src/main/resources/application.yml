@@ -2,6 +2,8 @@ spring:
   profiles:
     active: local
 
+logging.level.yahoofinance.histquotes2.HistQuotes2Request: ERROR
+
 ---
 spring:
   profiles: local

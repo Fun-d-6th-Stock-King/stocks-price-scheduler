@@ -32,63 +32,99 @@ import lombok.NoArgsConstructor;
 @Builder
 public class StocksPrice implements Serializable {
 
-	private static final long serialVersionUID = -1293146290479381252L;
+    private static final long serialVersionUID = -1293146290479381252L;
 
-	@Id
-	@Column(name = "id")
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
-	
-	@Column(name = "stocks_id")
-	private int stocksId;
+    @Id
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
-	@Column(name = "price")
-	private BigDecimal price;
-	
-	@Column(name = "date_check")
-	private LocalDateTime dateCheck;
-	
-	@Column(name = "price_y1")
-	private BigDecimal priceY1;
-	
-	@Column(name = "date_y1")
-	private LocalDateTime dateY1;
-	
-	@Column(name = "yield_y1")
-	private BigDecimal yieldY1;
-	
-	@Column(name = "price_y3")
-	private BigDecimal priceY3;
-	
-	@Column(name = "date_y3")
-	private LocalDateTime dateY3;
-	
-	@Column(name = "yield_y3")
-	private BigDecimal yieldY3;
-	
-	@Column(name = "price_y5")
-	private BigDecimal priceY5;
-	
-	@Column(name = "date_y5")
-	private LocalDateTime dateY5;
-	
-	@Column(name = "yield_y5")
-	private BigDecimal yieldY5;
-	
-	@Column(name = "price_y10")
-	private BigDecimal priceY10;
-	
-	@Column(name = "date_y10")
-	private LocalDateTime dateY10;
-	
-	@Column(name = "yield_y10")
-	private BigDecimal yieldY10;
-	
+    @Column(name = "stocks_id")
+    private int stocksId;
+
+    @Column(name = "price")
+    private BigDecimal price;
+
+    @Column(name = "last_trade_date")
+    private LocalDateTime lastTradeDate;
+
+    @Column(name = "price_y1")
+    private BigDecimal priceY1;
+
+    @Column(name = "date_y1")
+    private LocalDateTime dateY1;
+
+    @Column(name = "yield_y1")
+    private BigDecimal yieldY1;
+
+    @Column(name = "price_y3")
+    private BigDecimal priceY3;
+
+    @Column(name = "date_y3")
+    private LocalDateTime dateY3;
+
+    @Column(name = "yield_y3")
+    private BigDecimal yieldY3;
+
+    @Column(name = "price_y5")
+    private BigDecimal priceY5;
+
+    @Column(name = "date_y5")
+    private LocalDateTime dateY5;
+
+    @Column(name = "yield_y5")
+    private BigDecimal yieldY5;
+
+    @Column(name = "price_y10")
+    private BigDecimal priceY10;
+
+    @Column(name = "date_y10")
+    private LocalDateTime dateY10;
+
+    @Column(name = "yield_y10")
+    private BigDecimal yieldY10;
+
+    @Column(name = "price_d1")
+    private BigDecimal priceD1;
+
+    @Column(name = "date_d1")
+    private LocalDateTime dateD1;
+
+    @Column(name = "yield_d1")
+    private BigDecimal yieldD1;
+    
+    @Column(name = "price_w1")
+    private BigDecimal priceW1;
+
+    @Column(name = "date_w1")
+    private LocalDateTime dateW1;
+
+    @Column(name = "yield_w1")
+    private BigDecimal yieldW1;
+    
+    @Column(name = "price_m1")
+    private BigDecimal priceM1;
+
+    @Column(name = "date_m1")
+    private LocalDateTime dateM1;
+
+    @Column(name = "yield_m1")
+    private BigDecimal yieldM1;
+
+    @Column(name = "price_m6")
+    private BigDecimal priceM6;
+
+    @Column(name = "date_m6")
+    private LocalDateTime dateM6;
+
+    @Column(name = "yield_m6")
+    private BigDecimal yieldM6;
+    
     @LastModifiedDate
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
-	
-	@OneToOne(fetch = FetchType.EAGER)
-	@JoinColumn(name = "stocks_id", insertable = false, updatable = false)
-	private Stocks stocks;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "stocks_id", insertable = false, updatable = false)
+    private Stocks stocks;
 }
