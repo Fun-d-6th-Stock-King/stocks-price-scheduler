@@ -30,9 +30,12 @@ public class CalcService {
 
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
+	
+	@Autowired
+    private OldStockRepository oldStockRepository;
 
-	@Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
-//	@Scheduled(fixedRate = 1000000000) // 테스트용
+//	@Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
+	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
 		
@@ -41,7 +44,7 @@ public class CalcService {
 		List<Stocks> stockList = stockRepository.findAllByMarket("KS")
 			.orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
 		
-//		stockList = stockList.subList(0, 10); // 10개만 테스트
+		stockList = stockList.subList(0, 10); // 10개만 테스트
 
 		for (Stocks target : stockList) {
 			StocksPrice stocksPrice = Optional.ofNullable(target.getStocksPrice()).orElse(new StocksPrice());
@@ -70,6 +73,8 @@ public class CalcService {
         // [end] kospi
         
 		stocksPriceRepository.saveAll(stockPriceList);
+		
+		saveOldStockPrice(stockPriceList);
 		
 		log.info("스케줄 종료");
 	}
@@ -249,6 +254,32 @@ public class CalcService {
 	    
         return stocksPrice;
 	}
+	
+	/**
+	 * OldStock 추가
+	 * @param stocksPriceList
+	 */
+    public void saveOldStockPrice(List<StocksPrice> stocksPriceList) {
+        List<OldStock> oldStockList = new ArrayList<>();
+        stocksPriceList = Optional.ofNullable(stocksPriceList)
+                .orElse(stocksPriceRepository.findAll());
+        
+        stocksPriceList.stream().forEach(vo -> {
+            OldStock oldStock = Optional
+                    .ofNullable(vo.getStocks().getOldStock())
+                    .orElse(new OldStock());
+            oldStock.setCode(vo.getStocks().getCode());
+            oldStock.setCompany(vo.getStocks().getCompany());
+            oldStock.setCurPrice(vo.getPrice());
+            oldStock.setOneYear(vo.getPriceY1());
+            oldStock.setFiveYear(vo.getPriceY5());
+            oldStock.setTenYear(vo.getPriceY10());
+            oldStock.setStocksId(vo.getStocksId());
+            oldStockList.add(oldStock);
+        });
+        
+        oldStockRepository.saveAll(oldStockList);
+    }
 
 	/**
 	 * LocalDate 객체를 Calendar 객체로 변화함
