@@ -1,6 +1,12 @@
 spring:
   profiles:
     active: local
+
+logging.level.yahoofinance.histquotes2.HistQuotes2Request: ERROR
+
+---
+spring:
+  profiles: local
   datasource:
     hikari:
       jdbc-url: jdbc:postgresql://54.180.140.193:5432/stocking 

@@ -25,159 +25,263 @@ import yahoofinance.histquotes.Interval;
 @Slf4j
 public class CalcService {
 
-    @Autowired
-    private StocksRepository stockRepository;
+	@Autowired
+	private StocksRepository stockRepository;
 
-    @Autowired
-    private StocksPriceRepository stocksPriceRepository;
-    
-    @Autowired
-    private OldStockRepository oldStockRepository;
+	@Autowired
+	private StocksPriceRepository stocksPriceRepository;
 
-    @Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
-    // @Scheduled(fixedRate = 1000000000) // 테스트용
-    public List<Stocks> collectStockPrice() throws Exception {
-        LocalDate now = LocalDate.now();
+	@Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
+//	@Scheduled(fixedRate = 1000000000) // 테스트용
+	public void getStockList() throws Exception {
+		LocalDate now = LocalDate.now();
+		
+		List<StocksPrice> stockPriceList = new ArrayList<>();
 
-        List<StocksPrice> stockPriceList = new ArrayList<>();
+		List<Stocks> stockList = stockRepository.findAllByMarket("KS")
+			.orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+		
+//		stockList = stockList.subList(0, 10); // 10개만 테스트
 
-        List<Stocks> stockList = stockRepository.findAll();
-//                .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+		for (Stocks target : stockList) {
+			StocksPrice stocksPrice = Optional.ofNullable(target.getStocksPrice()).orElse(new StocksPrice());
 
-        // stockList = stockList.subList(0, 10); // 10개만 테스트
+			String stockCode = target.getCode() + "." + target.getMarket();
 
-        for (Stocks target : stockList) {
-            StocksPrice stocksPrice = Optional.ofNullable(target.getStocksPrice()).orElse(new StocksPrice());
+			Stock stock = YahooFinance.get(stockCode);
+			
+			BigDecimal price = stock.getQuote().getPrice();
+			stocksPrice.setStocksId(target.getId());
+			stocksPrice.setPrice(price);
+			stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
+			
+			stockPriceList.add(getStockHist(stock, stocksPrice, price, now));
+		}
+		
+		// [start] kospi
+		StocksPrice stocksPrice = stocksPriceRepository.findById(804).orElse(new StocksPrice());
+        String stockCode = "^KS11";
+        Stock stock = YahooFinance.get(stockCode);
+        
+        BigDecimal price = stock.getQuote().getPrice();
+        stocksPrice.setPrice(price);
+        stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
+        stockPriceList.add(getStockHist(stock, stocksPrice, price, now));
+        // [end] kospi
+        
+		stocksPriceRepository.saveAll(stockPriceList);
+		
+		log.info("스케줄 종료");
+	}
+	
+	/**
+	 * 종목별 historical 데이터를 가져옴니다. 수익금, 수익률 계산도합니다.
+	 * @param stock
+	 * @param stocksPrice
+	 * @param price
+	 * @param now
+	 * @return
+	 */
+	public StocksPrice getStockHist(Stock stock, StocksPrice stocksPrice, BigDecimal price, LocalDate now) {
+	    // 어제
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.minusDays(1), now.minusDays(1).plusDays(7),
+                    Interval.DAILY);
 
-            String stockCode = target.getCode() + "." + target.getMarket();
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
+                    .multiply(new BigDecimal(10000));
 
-            Stock stock = YahooFinance.get(stockCode, true);
+            stocksPrice.setDateD1(date);
+            stocksPrice.setPriceD1(oldPrice);
+            stocksPrice.setYieldD1(yield);
 
-            BigDecimal price = stock.getQuote().getPrice();
-            stocksPrice.setStocksId(target.getId());
-            stocksPrice.setPrice(price);
-            Calendar dateCheck = stock.getHistory().get(stock.getHistory().size() - 1).getDate();
-            stocksPrice.setDateCheck(convertDateTime(dateCheck));
+        } catch (Exception e) {
+            log.error("{} / {} day fail", stock.getName(), 1);
+            return stocksPrice;
+        }
+        
+        // 1주일전
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.minusWeeks(1), now.minusWeeks(1).plusDays(7),
+                    Interval.DAILY);
 
-            // 1년전
-            try {
-                List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-1), now.plusYears(-1).plusDays(7),
-                        Interval.DAILY);
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
+                    .multiply(new BigDecimal(10000));
 
-                HistoricalQuote quote = hist.get(0);
-                LocalDateTime date = convertDateTime(quote.getDate());
-                BigDecimal oldPrice = quote.getClose();
-                BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
-                        .multiply(new BigDecimal(10000));
+            stocksPrice.setDateW1(date);
+            stocksPrice.setPriceW1(oldPrice);
+            stocksPrice.setYieldW1(yield);
 
-                stocksPrice.setDateY1(date);
-                stocksPrice.setPriceY1(oldPrice);
-                stocksPrice.setYieldY1(yield);
-            } catch (Exception e) {
-                log.error("{} / {} year fail", stockCode, 1);
-            }
+        } catch (Exception e) {
+            log.error("{} / {} Weeks fail", stock.getName(), 1);
+            return stocksPrice;
+        }
+        
+        // 한달전
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.minusMonths(1), now.minusMonths(1).plusDays(7),
+                    Interval.DAILY);
 
-            // 3년전
-            try {
-                List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-3), now.plusYears(-3).plusDays(7),
-                        Interval.DAILY);
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
+                    .multiply(new BigDecimal(10000));
 
-                HistoricalQuote quote = hist.get(0);
-                LocalDateTime date = convertDateTime(quote.getDate());
-                BigDecimal oldPrice = quote.getClose();
-                BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
-                        .multiply(new BigDecimal(10000));
+            stocksPrice.setDateM1(date);
+            stocksPrice.setPriceM1(oldPrice);
+            stocksPrice.setYieldM1(yield);
 
-                stocksPrice.setDateY3(date);
-                stocksPrice.setPriceY3(oldPrice);
-                stocksPrice.setYieldY3(yield);
-            } catch (Exception e) {
-                log.error("{} / {} year fail", stockCode, 3);
-            }
+        } catch (Exception e) {
+            log.error("{} / {} month fail", stock.getName(), 1);
+            return stocksPrice;
+        }
+        
+        // 6개월전
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.minusMonths(6), now.minusMonths(6).plusDays(7),
+                    Interval.DAILY);
 
-            // 5년전
-            try {
-                List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-5), now.plusYears(-5).plusDays(7),
-                        Interval.DAILY);
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
+                    .multiply(new BigDecimal(10000));
 
-                HistoricalQuote quote = hist.get(0);
-                LocalDateTime date = convertDateTime(quote.getDate());
-                BigDecimal oldPrice = quote.getClose();
-                BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
-                        .multiply(new BigDecimal(10000));
+            stocksPrice.setDateM6(date);
+            stocksPrice.setPriceM6(oldPrice);
+            stocksPrice.setYieldM6(yield);
 
-                stocksPrice.setDateY5(date);
-                stocksPrice.setPriceY5(oldPrice);
-                stocksPrice.setYieldY5(yield);
-            } catch (Exception e) {
-                log.error("{} / {} year fail", stockCode, 5);
-            }
-
-            // 10년전
-            try {
-                List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-10), now.plusYears(-10).plusDays(7),
-                        Interval.DAILY);
-
-                HistoricalQuote quote = hist.get(0);
-                LocalDateTime date = convertDateTime(quote.getDate());
-                BigDecimal oldPrice = quote.getClose();
-                BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
-                        .multiply(new BigDecimal(10000));
-
-                stocksPrice.setDateY10(date);
-                stocksPrice.setPriceY10(oldPrice);
-                stocksPrice.setYieldY10(yield);
-            } catch (Exception e) {
-                log.error("{} / {} year fail", stockCode, 10);
-            }
-
-            stockPriceList.add(stocksPrice);
+        } catch (Exception e) {
+            log.error("{} / {} Month fail", stock.getName(), 6);
+            return stocksPrice;
         }
 
-        stocksPriceRepository.saveAll(stockPriceList);
-
-        this.saveStockPrice(stockPriceList);
+        // 1년전
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-1), now.plusYears(-1).plusDays(7),
+                Interval.DAILY);
+            
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price
+                .subtract(oldPrice)
+                .divide(oldPrice, MathContext.DECIMAL32)
+                .multiply(new BigDecimal(10000));
+            
+            stocksPrice.setDateY1(date);
+            stocksPrice.setPriceY1(oldPrice);
+            stocksPrice.setYieldY1(yield);
+        } catch (Exception e) {
+            log.error("{} / {} year fail", stock.getName(), 1);
+            return stocksPrice;
+        }
         
-        return stockList;
-    }
-    
-//    @Scheduled(fixedRate = 1000000000)
-    public void saveStockPrice(List<StocksPrice> stocksPriceList) {
-        List<OldStock> oldStockList = new ArrayList<>();
-        stocksPriceList = Optional.ofNullable(stocksPriceList)
-                .orElse(stocksPriceRepository.findAll());
+        // 3년전
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-3), now.plusYears(-3).plusDays(7),
+                Interval.DAILY);
+            
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price
+                .subtract(oldPrice)
+                .divide(oldPrice, MathContext.DECIMAL32)
+                .multiply(new BigDecimal(10000));
+            
+            stocksPrice.setDateY3(date);
+            stocksPrice.setPriceY3(oldPrice);
+            stocksPrice.setYieldY3(yield);
+        } catch (Exception e) {
+            log.error("{} / {} year fail", stock.getName(), 3);
+            return stocksPrice;
+        }
         
-        stocksPriceList.stream().forEach(vo -> {
-            OldStock oldStock = Optional
-                    .ofNullable(vo.getStocks().getOldStock())
-                    .orElse(new OldStock());
-            oldStock.setCode(vo.getStocks().getCode());
-            oldStock.setCompany(vo.getStocks().getCompany());
-            oldStock.setCurPrice(vo.getPrice());
-            oldStock.setOneYear(vo.getPriceY1());
-            oldStock.setFiveYear(vo.getPriceY5());
-            oldStock.setTenYear(vo.getPriceY10());
-            oldStock.setStocksId(vo.getStocksId());
-            oldStockList.add(oldStock);
-        });
+        // 5년전 
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-5), now.plusYears(-5).plusDays(7),
+                Interval.DAILY);
+            
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price
+                .subtract(oldPrice)
+                .divide(oldPrice, MathContext.DECIMAL32)
+                .multiply(new BigDecimal(10000));
+            
+            stocksPrice.setDateY5(date);
+            stocksPrice.setPriceY5(oldPrice);
+            stocksPrice.setYieldY5(yield);
+        } catch (Exception e) {
+            log.error("{} / {} year fail", stock.getName(), 5);
+            return stocksPrice;
+        }
         
-        oldStockRepository.saveAll(oldStockList);
-    }
+        // 10년전 
+        try {
+            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-10), now.plusYears(-10).plusDays(7),
+                Interval.DAILY);
+            
+            HistoricalQuote quote = hist.get(0);
+            LocalDateTime date = convertDateTime(quote.getDate());
+            BigDecimal oldPrice = quote.getClose();
+            BigDecimal yield = price
+                .subtract(oldPrice)
+                .divide(oldPrice, MathContext.DECIMAL32)
+                .multiply(new BigDecimal(10000));
+            
+            stocksPrice.setDateY10(date);
+            stocksPrice.setPriceY10(oldPrice);
+            stocksPrice.setYieldY10(yield);
+        } catch (Exception e) {
+            log.error("{} / {} year fail", stock.getName(), 10);
+            return stocksPrice;
+        }
+	    
+        return stocksPrice;
+	}
 
-    public static Calendar convertCal(LocalDate localDate) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.clear();
-        calendar.set(localDate.getYear(), localDate.getMonthValue() - 1, localDate.getDayOfMonth());
-        return calendar;
-    }
+	/**
+	 * LocalDate 객체를 Calendar 객체로 변화함
+	 * @param localDate
+	 * @return
+	 */
+	public static Calendar convertCal(LocalDate localDate) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.clear();
+		calendar.set(localDate.getYear(), localDate.getMonthValue() - 1, localDate.getDayOfMonth());
+		return calendar;
+	}
 
-    public static LocalDateTime convertDateTime(Calendar calendar) {
-        return LocalDateTime.ofInstant(calendar.toInstant(), ZoneId.of("Asia/Seoul"));
-    }
+	/**
+	 * Calendar 객체를 LocalDateTime 객체로 변화함
+	 * @param calendar
+	 * @return
+	 */
+	public static LocalDateTime convertDateTime(Calendar calendar) {
+		return LocalDateTime.ofInstant(calendar.toInstant(), ZoneId.of("Asia/Seoul"));
+	}
 
-    public static List<HistoricalQuote> getHistory(Stock stock, LocalDate from, LocalDate to, Interval interval)
-            throws IOException {
-
-        return stock.getHistory(convertCal(from), convertCal(to), interval);
-    }
+	/**
+	 * LocalDate 객체를 사용하여 histortical 데이터를 가져옵니다
+	 * @param stock
+	 * @param from
+	 * @param to
+	 * @param interval
+	 * @return
+	 * @throws IOException
+	 */
+	public static List<HistoricalQuote> getHistory(Stock stock, LocalDate from, LocalDate to, Interval interval)
+		throws IOException {
+		return stock.getHistory(convertCal(from), convertCal(to), interval);
+	}
 }

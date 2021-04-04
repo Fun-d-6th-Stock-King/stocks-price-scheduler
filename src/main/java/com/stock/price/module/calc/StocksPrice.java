@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,15 +15,21 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "stocks_price")
+@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class StocksPrice implements Serializable {
 
     private static final long serialVersionUID = -1293146290479381252L;
@@ -38,8 +45,8 @@ public class StocksPrice implements Serializable {
     @Column(name = "price")
     private BigDecimal price;
 
-    @Column(name = "date_check")
-    private LocalDateTime dateCheck;
+    @Column(name = "last_trade_date")
+    private LocalDateTime lastTradeDate;
 
     @Column(name = "price_y1")
     private BigDecimal priceY1;
@@ -77,7 +84,47 @@ public class StocksPrice implements Serializable {
     @Column(name = "yield_y10")
     private BigDecimal yieldY10;
 
-    @OneToOne
+    @Column(name = "price_d1")
+    private BigDecimal priceD1;
+
+    @Column(name = "date_d1")
+    private LocalDateTime dateD1;
+
+    @Column(name = "yield_d1")
+    private BigDecimal yieldD1;
+    
+    @Column(name = "price_w1")
+    private BigDecimal priceW1;
+
+    @Column(name = "date_w1")
+    private LocalDateTime dateW1;
+
+    @Column(name = "yield_w1")
+    private BigDecimal yieldW1;
+    
+    @Column(name = "price_m1")
+    private BigDecimal priceM1;
+
+    @Column(name = "date_m1")
+    private LocalDateTime dateM1;
+
+    @Column(name = "yield_m1")
+    private BigDecimal yieldM1;
+
+    @Column(name = "price_m6")
+    private BigDecimal priceM6;
+
+    @Column(name = "date_m6")
+    private LocalDateTime dateM6;
+
+    @Column(name = "yield_m6")
+    private BigDecimal yieldM6;
+    
+    @LastModifiedDate
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate;
+
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "stocks_id", insertable = false, updatable = false)
     private Stocks stocks;
 }
