@@ -84,15 +84,6 @@ public class StocksPrice implements Serializable {
     @Column(name = "yield_y10")
     private BigDecimal yieldY10;
 
-    @Column(name = "price_d1")
-    private BigDecimal priceD1;
-
-    @Column(name = "date_d1")
-    private LocalDateTime dateD1;
-
-    @Column(name = "yield_d1")
-    private BigDecimal yieldD1;
-    
     @Column(name = "price_w1")
     private BigDecimal priceW1;
 
@@ -119,6 +110,12 @@ public class StocksPrice implements Serializable {
 
     @Column(name = "yield_m6")
     private BigDecimal yieldM6;
+    
+    @Column(name = "market_cap")
+    private BigDecimal marketCap;
+    
+    @Column(name = "stop_trading")
+    private Boolean stopTrading;
     
     @LastModifiedDate
     @Column(name = "updated_date")

@@ -53,15 +53,33 @@ public class OldStock implements Serializable {
     @Column(name = "ten_year")
     private BigDecimal tenYear;
 
-    @Column(name = "cur_price")
-    private BigDecimal curPrice;
-    
     @Column(name = "stocks_id")
     private int stocksId;
     
     @LastModifiedDate
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
+    
+    @Column(name = "one_day")
+    private BigDecimal oneDay;
+    
+    @Column(name = "one_week")
+    private BigDecimal oneWeek;
+    
+    @Column(name = "one_month")
+    private BigDecimal oneMonth;
+    
+    @Column(name = "six_month")
+    private BigDecimal sixMonth;
+    
+    @Column(name = "stop_trade")
+    private Boolean stopTrade;
+    
+    @Column(name = "market_cap")
+    private BigDecimal marketCap;
+    
+    @Column(name = "sector")
+    private String sector;
 
     @OneToOne
     @JoinColumn(name = "stocks_id", insertable = false, updatable = false)
