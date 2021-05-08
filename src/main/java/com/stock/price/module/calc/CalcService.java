@@ -27,7 +27,7 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Scheduled(cron = "0 5 4 * * *", zone = "Asia/Seoul") // 매일 04 시 05 분 실행
+	@Scheduled(cron = "0 0 4 * * 1-5", zone = "Asia/Seoul") // 매일 04 시 00 분 실행
 //	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
