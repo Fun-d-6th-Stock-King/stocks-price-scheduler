@@ -6,10 +6,8 @@ import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,51 +25,42 @@ import yahoofinance.histquotes.Interval;
 public class CalcService {
 
 	@Autowired
-	private StocksRepository stockRepository;
-
-	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Autowired
-    private OldStockRepository oldStockRepository;
-
-//	@Scheduled(cron = "0 5 2 * * *", zone = "Asia/Seoul") // 매일 02 시 05 분 실행
-	@Scheduled(fixedRate = 86400000) // 테스트용
+	@Scheduled(cron = "0 5 4 * * *", zone = "Asia/Seoul") // 매일 04 시 05 분 실행
+//	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
 		
-		List<StocksPrice> stockPriceList = new ArrayList<>();
+		List<StocksPrice> stockPriceList = stocksPriceRepository.findAllByIdNotIn(List.of(804L))
+		    .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+
+//      ======================================================= 10개만 테스트
+//		stockPriceList = stockPriceList.subList(0, 10); 
+//      ======================================================= 10개만 테스트
 		
-//		List<Stocks> stockList = stockRepository.findAllById(List.of(1594));
-
-		List<Stocks> stockList = stockRepository.findAllByMarket("KS")
-			.orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+		stocksPriceRepository.saveAll(stockPriceList.stream()
+	            .map(vo -> {
+	                vo.setStopTrading(true);
+	                return vo;
+	            }).collect(Collectors.toList()));
 		
-		stocksPriceRepository.saveAll(stockList.stream().map(vo -> {
-            vo.getStocksPrice().setStopTrading(true);
-            return vo.getStocksPrice();
-        }).collect(Collectors.toList()));
-		
-//		stockList = stockList.subList(0, 10); // 10개만 테스트
 
-		for (Stocks target : stockList) {
-			StocksPrice stocksPrice = Optional.ofNullable(target.getStocksPrice()).orElse(new StocksPrice());
-
-			String stockCode = target.getCode() + "." + target.getMarket();
-
-			Stock stock = YahooFinance.get(stockCode);
-			
-			BigDecimal price = stock.getQuote().getPrice();
-			stocksPrice.setStocksId(target.getId());
-			stocksPrice.setPrice(price);
-			stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
-			stocksPrice.setStopTrading(false);
-			
-			stockPriceList.add(getStockHist(stock, stocksPrice, price, now));
-		}
+		for (int i = 0; i < 10; i++) {
+		    StocksPrice stocksPrice = stockPriceList.get(i);
+		    String stockCode = stocksPrice.getCode() + ".KS";
+            Stock stock = YahooFinance.get(stockCode);
+            
+            BigDecimal price = stock.getQuote().getPrice();
+//          stocksPrice.setStocksId(target.getId());
+            stocksPrice.setPrice(price);
+            stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
+            
+            stockPriceList.add(getStockHist(stock, stocksPrice, price, now));
+        }
 		
 		// [start] kospi
-		StocksPrice stocksPrice = stocksPriceRepository.findById(804).orElse(new StocksPrice());
+		StocksPrice stocksPrice = stocksPriceRepository.findById(804L).orElse(new StocksPrice());
         String stockCode = "^KS11"; // 005930.KS
         Stock stock = YahooFinance.get(stockCode);
         
@@ -82,8 +71,6 @@ public class CalcService {
         // [end] kospi
         
 		stocksPriceRepository.saveAll(stockPriceList);
-		
-		saveOldStockPrice(stockPriceList);
 		
 		log.info("스케줄 종료");
 	}
@@ -98,7 +85,7 @@ public class CalcService {
 	 */
 	public StocksPrice getStockHist(Stock stock, StocksPrice stocksPrice, BigDecimal price, LocalDate now) {
 	    
-	    stocksPrice.setMarketCap(stock.getStats().getMarketCap());
+	    stocksPrice.setMarketCap(stock.getStats().getMarketCap() != null ? stock.getStats().getMarketCap() : new BigDecimal(0));
 	    stocksPrice.setStopTrading(false);
 	    
         // 1주일전
@@ -248,36 +235,6 @@ public class CalcService {
         return stocksPrice;
 	}
 	
-	/**
-	 * OldStock 추가
-	 * @param stocksPriceList
-	 */
-    public void saveOldStockPrice(List<StocksPrice> stocksPriceList) {
-        List<OldStock> oldStockList = new ArrayList<>();
-        stocksPriceList = Optional.ofNullable(stocksPriceList)
-                .orElse(stocksPriceRepository.findAll());
-        
-        stocksPriceList.stream().forEach(vo -> {
-            OldStock oldStock = Optional
-                    .ofNullable(vo.getStocks().getOldStock())
-                    .orElse(new OldStock());
-            oldStock.setCode(vo.getStocks().getCode());
-            oldStock.setCompany(vo.getStocks().getCompany());
-            oldStock.setOneYear(vo.getPriceY1());
-            oldStock.setFiveYear(vo.getPriceY5());
-            oldStock.setTenYear(vo.getPriceY10());
-            oldStock.setOneDay(vo.getPrice());
-            oldStock.setOneWeek(vo.getPriceW1());
-            oldStock.setOneMonth(vo.getPriceM1());
-            oldStock.setSixMonth(vo.getPriceM6());
-            oldStock.setStopTrade(false);
-            oldStock.setMarketCap(vo.getMarketCap());
-            oldStock.setStocksId(vo.getStocksId());
-            oldStockList.add(oldStock);
-        });
-        
-        oldStockRepository.saveAll(oldStockList);
-    }
 
 	/**
 	 * LocalDate 객체를 Calendar 객체로 변화함

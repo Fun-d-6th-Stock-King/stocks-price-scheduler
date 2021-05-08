@@ -57,8 +57,5 @@ public class Stocks implements Serializable {
     private String market;
 
     @OneToOne(mappedBy = "stocks")
-    private StocksPrice stocksPrice;
-    
-    @OneToOne(mappedBy = "stocks")
     private OldStock oldStock;
 }

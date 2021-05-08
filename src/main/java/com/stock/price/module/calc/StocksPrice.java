@@ -3,6 +3,7 @@ package com.stock.price.module.calc;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,10 +38,22 @@ public class StocksPrice implements Serializable {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
 
     @Column(name = "stocks_id")
-    private int stocksId;
+    private long stocksId;
+
+    @Column(name = "sector_yahoo")
+    private String sectorYahoo;
+
+    @Column(name = "industry_yahoo")
+    private String industryYahoo;
+    
+    @Column(name = "company")
+    private String company;
+
+    @Column(name = "code")
+    private String code;
 
     @Column(name = "price")
     private BigDecimal price;
@@ -121,7 +134,7 @@ public class StocksPrice implements Serializable {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "stocks_id", insertable = false, updatable = false)
-    private Stocks stocks;
+//    @OneToOne(fetch = FetchType.EAGER)
+//    @JoinColumn(name = "stocks_id", insertable = false, updatable = false)
+//    private Stocks stocks;
 }
