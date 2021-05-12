@@ -35,10 +35,6 @@ public class CalcService {
 		List<StocksPrice> stockPriceList = stocksPriceRepository.findAllByIdNotIn(List.of(804L))
 		    .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
 
-//      ======================================================= 10개만 테스트
-//		stockPriceList = stockPriceList.subList(0, 10); 
-//      ======================================================= 10개만 테스트
-		
 		stocksPriceRepository.saveAll(stockPriceList.stream()
 	            .map(vo -> {
 	                vo.setStopTrading(true);
@@ -46,7 +42,7 @@ public class CalcService {
 	            }).collect(Collectors.toList()));
 		
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < stockPriceList.size(); i++) {
 		    StocksPrice stocksPrice = stockPriceList.get(i);
 		    String stockCode = stocksPrice.getCode() + ".KS";
             Stock stock = YahooFinance.get(stockCode);
