@@ -27,7 +27,7 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Scheduled(cron = "0 0 4 * * 1-5", zone = "Asia/Seoul") // 매일 04 시 00 분 실행
+	@Scheduled(cron = "0 0 2 * * 1-5", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
 //	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
@@ -40,19 +40,20 @@ public class CalcService {
 	                vo.setStopTrading(true);
 	                return vo;
 	            }).collect(Collectors.toList()));
-		
 
 		for (int i = 0; i < stockPriceList.size(); i++) {
 		    StocksPrice stocksPrice = stockPriceList.get(i);
 		    String stockCode = stocksPrice.getCode() + ".KS";
             Stock stock = YahooFinance.get(stockCode);
-            
-            BigDecimal price = stock.getQuote().getPrice();
-//          stocksPrice.setStocksId(target.getId());
-            stocksPrice.setPrice(price);
-            stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
-            
-            stockPriceList.add(getStockHist(stock, stocksPrice, price, now));
+            try {
+                BigDecimal price = stock.getQuote().getPrice();
+                stocksPrice.setPrice(price);
+                stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
+                stockPriceList.add(getStockHist(stock, stocksPrice, price, now));    
+            } catch (Exception e) {
+                log.error("stock.getQuote fail {}", stock.getName());
+                log.error("Exception", e);
+            }
         }
 		
 		// [start] kospi
