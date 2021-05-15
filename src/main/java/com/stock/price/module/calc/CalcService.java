@@ -27,7 +27,7 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Scheduled(cron = "0 0 2 * * 1-5", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
+	@Scheduled(cron = "0 0 1 * * 1-5", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
 //	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
@@ -51,7 +51,7 @@ public class CalcService {
                 stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
                 stockPriceList.add(getStockHist(stock, stocksPrice, price, now));    
             } catch (Exception e) {
-                log.error("stock.getQuote fail {}", stock.getName());
+                log.error("stock.getQuote fail {} [{}]", stocksPrice.getCompany(), stocksPrice.getCode());
                 log.error("Exception", e);
             }
         }
