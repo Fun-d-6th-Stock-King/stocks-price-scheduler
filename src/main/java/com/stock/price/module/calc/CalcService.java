@@ -6,6 +6,7 @@ import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,13 +28,15 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Scheduled(cron = "0 0 1 * * 1-5", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
+	@Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
 //	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
 		
 		List<StocksPrice> stockPriceList = stocksPriceRepository.findAllByIdNotIn(List.of(804L))
 		    .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+		
+		List<StocksPrice> newStockPirceList = new ArrayList<>();
 
 		stocksPriceRepository.saveAll(stockPriceList.stream()
 	            .map(vo -> {
@@ -43,17 +46,19 @@ public class CalcService {
 
 		for (int i = 0; i < stockPriceList.size(); i++) {
 		    StocksPrice stocksPrice = stockPriceList.get(i);
+		    log.info("CALL [" + stocksPrice.getCompany() + "] " + stocksPrice.getCode());
 		    String stockCode = stocksPrice.getCode() + ".KS";
             Stock stock = YahooFinance.get(stockCode);
             try {
                 BigDecimal price = stock.getQuote().getPrice();
                 stocksPrice.setPrice(price);
                 stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
-                stockPriceList.add(getStockHist(stock, stocksPrice, price, now));    
+                newStockPirceList.add(getStockHist(stock, stocksPrice, price, now));    
             } catch (Exception e) {
-                log.error("stock.getQuote fail {} [{}]", stocksPrice.getCompany(), stocksPrice.getCode());
+                log.error("stock.getQuote fail [{}]", stocksPrice.getCompany());
                 log.error("Exception", e);
             }
+            Thread.sleep(2000);
         }
 		
 		// [start] kospi
@@ -64,10 +69,10 @@ public class CalcService {
         BigDecimal price = stock.getQuote().getPrice();
         stocksPrice.setPrice(price);
         stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
-        stockPriceList.add(getStockHist(stock, stocksPrice, price, now));
+        newStockPirceList.add(getStockHist(stock, stocksPrice, price, now));
         // [end] kospi
         
-		stocksPriceRepository.saveAll(stockPriceList);
+		stocksPriceRepository.saveAll(newStockPirceList); // 남은게 있으면 저장
 		
 		log.info("스케줄 종료");
 	}
