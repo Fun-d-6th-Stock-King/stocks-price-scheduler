@@ -3,7 +3,7 @@ spring:
     active: local
   datasource:
     hikari:
-      jdbc-url: jdbc:postgresql://54.180.140.193:5432/stocking 
+      jdbc-url: jdbc:postgresql://13.124.97.47:5432/stocking 
       username: stocking
       password: stocking1234 
       driver-class-name: org.postgresql.Driver
