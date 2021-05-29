@@ -9,7 +9,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +27,7 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
+	@Scheduled(cron = "0 0 1 * * 1-5", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
 //	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
@@ -37,12 +36,14 @@ public class CalcService {
 		    .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
 		
 		List<StocksPrice> newStockPirceList = new ArrayList<>();
+		
+		stockPriceList.forEach(vo -> vo.setStopTrading(true));
 
-		stocksPriceRepository.saveAll(stockPriceList.stream()
-	            .map(vo -> {
-	                vo.setStopTrading(true);
-	                return vo;
-	            }).collect(Collectors.toList()));
+//		stocksPriceRepository.saveAll(stockPriceList.stream()
+//	            .map(vo -> {
+//	                vo.setStopTrading(true);
+//	                return vo;
+//	            }).collect(Collectors.toList()));
 
 		for (int i = 0; i < stockPriceList.size(); i++) {
 		    StocksPrice stocksPrice = stockPriceList.get(i);
