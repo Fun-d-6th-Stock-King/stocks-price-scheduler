@@ -29,4 +29,8 @@ dependencies {
     
     // logback
     implementation group: 'org.logback-extensions', name: 'logback-ext-spring', version: '0.1.5'
+
+    // jsoup(Java HTML Parser)
+    // https://jsoup.org
+    compile("org.jsoup:jsoup:1.13.1")
 }
