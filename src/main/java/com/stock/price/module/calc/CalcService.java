@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.stock.price.module.calc.Crawler.ExCase;
+
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.Stock;
 import yahoofinance.YahooFinance;
@@ -27,7 +29,7 @@ public class CalcService {
 	@Autowired
 	private StocksPriceRepository stocksPriceRepository;
 	
-	@Scheduled(cron = "0 0 1 * * 1-5", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
+	@Scheduled(cron = "0 0 1 * * 1-5", zone = "Asia/Seoul") // 평일 01 시 00 분 실행
 //	@Scheduled(fixedRate = 86400000) // 테스트용
 	public void getStockList() throws Exception {
 		LocalDate now = LocalDate.now();
@@ -38,12 +40,6 @@ public class CalcService {
 		List<StocksPrice> newStockPirceList = new ArrayList<>();
 		
 		stockPriceList.forEach(vo -> vo.setStopTrading(true));
-
-//		stocksPriceRepository.saveAll(stockPriceList.stream()
-//	            .map(vo -> {
-//	                vo.setStopTrading(true);
-//	                return vo;
-//	            }).collect(Collectors.toList()));
 
 		for (int i = 0; i < stockPriceList.size(); i++) {
 		    StocksPrice stocksPrice = stockPriceList.get(i);
@@ -274,10 +270,37 @@ public class CalcService {
 		return stock.getHistory(convertCal(from), convertCal(to), interval);
 	}
 
-    // @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
-    // @Scheduled(fixedRate = 86400000) // 테스트용
-    public static void updateExceptionCaseStocks() throws Exception {
-	    Crawler.getExceptionCaseStocks();
-	}
+     @Scheduled(cron = "0 0 3 * * 1-5", zone = "Asia/Seoul") // 평일 03 시 00 분 실행
+//     @Scheduled(fixedRate = 86400000) // 테스트용
+     public void updateExceptionCaseStocks() throws Exception {
+         log.info("거래중지 스케줄러 시작");
+         List<StocksPrice> stockPriceList = stocksPriceRepository.findAllByIdNotIn(List.of(804L))
+                 .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+         
+         ExCase exCase = new Crawler().getExceptionCaseStocks();
+         
+         stockPriceList.forEach(vo -> {
+             vo.setTradingHalt(false);
+             vo.setManagement(false);
+             vo.setInvestmentAlert(false);
+             
+             if(exCase.getStoppedTradingCodes().contains(vo.getCode())) {
+                 vo.setTradingHalt(true);
+             }
+             
+             if(exCase.getManagedCodes().contains(vo.getCode())) {
+                 vo.setManagement(true);
+             }
+             
+             if(exCase.getWarnedCodes().contains(vo.getCode())) {
+                 vo.setInvestmentAlert(true);
+             }
+             
+         });
+         
+         stocksPriceRepository.saveAll(stockPriceList);
+
+         log.info("거래중지 스케줄러 종료");
+     }
 
 }
