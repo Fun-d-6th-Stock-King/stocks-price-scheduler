@@ -272,4 +272,11 @@ public class CalcService {
 		throws IOException {
 		return stock.getHistory(convertCal(from), convertCal(to), interval);
 	}
+
+    // @Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul") // 매일 02 시 00 분 실행
+    // @Scheduled(fixedRate = 86400000) // 테스트용
+    public static void updateExceptionCaseStocks() throws Exception {
+	    Crawler.getExceptionCaseStocks();
+	}
+
 }
