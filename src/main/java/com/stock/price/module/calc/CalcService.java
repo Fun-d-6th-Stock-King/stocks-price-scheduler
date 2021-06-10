@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -45,8 +46,8 @@ public class CalcService {
 		    StocksPrice stocksPrice = stockPriceList.get(i);
 		    log.info("CALL [" + stocksPrice.getCompany() + "] " + stocksPrice.getCode());
 		    String stockCode = stocksPrice.getCode() + ".KS";
-            Stock stock = YahooFinance.get(stockCode);
             try {
+                Stock stock = YahooFinance.get(stockCode);
                 BigDecimal price = stock.getQuote().getPrice();
                 stocksPrice.setPrice(price);
                 stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
@@ -55,7 +56,9 @@ public class CalcService {
                 log.error("stock.getQuote fail [{}]", stocksPrice.getCompany());
                 log.error("Exception", e);
             }
-            Thread.sleep(2000);
+            Random randomGenerator = new Random();
+
+            Thread.sleep(2000 + randomGenerator.nextInt(2000));
         }
 		
 		// [start] kospi
@@ -270,7 +273,7 @@ public class CalcService {
 		return stock.getHistory(convertCal(from), convertCal(to), interval);
 	}
 
-     @Scheduled(cron = "0 0 3 * * 1-5", zone = "Asia/Seoul") // 평일 03 시 00 분 실행
+     @Scheduled(cron = "0 5 7-18 * * 1-5", zone = "Asia/Seoul") // 평일 7 ~ 18 시 사이에 매 05 분 실행
 //     @Scheduled(fixedRate = 86400000) // 테스트용
      public void updateExceptionCaseStocks() throws Exception {
          log.info("거래중지 스케줄러 시작");
