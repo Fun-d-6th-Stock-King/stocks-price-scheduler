@@ -1,13 +1,10 @@
 package com.stock.price.module.calc;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
@@ -15,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.stock.price.infra.CommonUtils;
 import com.stock.price.module.calc.Crawler.ExCase;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +48,7 @@ public class CalcService {
                 Stock stock = YahooFinance.get(stockCode);
                 BigDecimal price = stock.getQuote().getPrice();
                 stocksPrice.setPrice(price);
-                stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
+                stocksPrice.setLastTradeDate(CommonUtils.convertDateTime(stock.getQuote().getLastTradeTime()));
                 newStockPirceList.add(getStockHist(stock, stocksPrice, price, now));    
             } catch (Exception e) {
                 log.error("stock.getQuote fail [{}]", stocksPrice.getCompany());
@@ -68,7 +66,7 @@ public class CalcService {
         
         BigDecimal price = stock.getQuote().getPrice();
         stocksPrice.setPrice(price);
-        stocksPrice.setLastTradeDate(convertDateTime(stock.getQuote().getLastTradeTime()));
+        stocksPrice.setLastTradeDate(CommonUtils.convertDateTime(stock.getQuote().getLastTradeTime()));
         newStockPirceList.add(getStockHist(stock, stocksPrice, price, now));
         // [end] kospi
         
@@ -92,11 +90,11 @@ public class CalcService {
 	    
         // 1주일전
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.minusWeeks(1), now.minusWeeks(1).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.minusWeeks(1), now.minusWeeks(1).plusDays(7),
                     Interval.DAILY);
 
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
                     .multiply(new BigDecimal(10000));
@@ -112,11 +110,11 @@ public class CalcService {
         
         // 한달전
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.minusMonths(1), now.minusMonths(1).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.minusMonths(1), now.minusMonths(1).plusDays(7),
                     Interval.DAILY);
 
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
                     .multiply(new BigDecimal(10000));
@@ -132,11 +130,11 @@ public class CalcService {
         
         // 6개월전
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.minusMonths(6), now.minusMonths(6).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.minusMonths(6), now.minusMonths(6).plusDays(7),
                     Interval.DAILY);
 
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price.subtract(oldPrice).divide(oldPrice, MathContext.DECIMAL32)
                     .multiply(new BigDecimal(10000));
@@ -152,11 +150,11 @@ public class CalcService {
 
         // 1년전
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-1), now.plusYears(-1).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.plusYears(-1), now.plusYears(-1).plusDays(7),
                 Interval.DAILY);
             
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price
                 .subtract(oldPrice)
@@ -173,11 +171,11 @@ public class CalcService {
         
         // 3년전
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-3), now.plusYears(-3).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.plusYears(-3), now.plusYears(-3).plusDays(7),
                 Interval.DAILY);
             
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price
                 .subtract(oldPrice)
@@ -194,11 +192,11 @@ public class CalcService {
         
         // 5년전 
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-5), now.plusYears(-5).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.plusYears(-5), now.plusYears(-5).plusDays(7),
                 Interval.DAILY);
             
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price
                 .subtract(oldPrice)
@@ -215,11 +213,11 @@ public class CalcService {
         
         // 10년전 
         try {
-            List<HistoricalQuote> hist = getHistory(stock, now.plusYears(-10), now.plusYears(-10).plusDays(7),
+            List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.plusYears(-10), now.plusYears(-10).plusDays(7),
                 Interval.DAILY);
             
             HistoricalQuote quote = hist.get(0);
-            LocalDateTime date = convertDateTime(quote.getDate());
+            LocalDateTime date = CommonUtils.convertDateTime(quote.getDate());
             BigDecimal oldPrice = quote.getClose();
             BigDecimal yield = price
                 .subtract(oldPrice)
@@ -237,42 +235,6 @@ public class CalcService {
         return stocksPrice;
 	}
 	
-
-	/**
-	 * LocalDate 객체를 Calendar 객체로 변화함
-	 * @param localDate
-	 * @return
-	 */
-	public static Calendar convertCal(LocalDate localDate) {
-		Calendar calendar = Calendar.getInstance();
-		calendar.clear();
-		calendar.set(localDate.getYear(), localDate.getMonthValue() - 1, localDate.getDayOfMonth());
-		return calendar;
-	}
-
-	/**
-	 * Calendar 객체를 LocalDateTime 객체로 변화함
-	 * @param calendar
-	 * @return
-	 */
-	public static LocalDateTime convertDateTime(Calendar calendar) {
-		return LocalDateTime.ofInstant(calendar.toInstant(), ZoneId.of("Asia/Seoul"));
-	}
-
-	/**
-	 * LocalDate 객체를 사용하여 histortical 데이터를 가져옵니다
-	 * @param stock
-	 * @param from
-	 * @param to
-	 * @param interval
-	 * @return
-	 * @throws IOException
-	 */
-	public static List<HistoricalQuote> getHistory(Stock stock, LocalDate from, LocalDate to, Interval interval)
-		throws IOException {
-		return stock.getHistory(convertCal(from), convertCal(to), interval);
-	}
-
      @Scheduled(cron = "0 5 7-18 * * 1-5", zone = "Asia/Seoul") // 평일 7 ~ 18 시 사이에 매 05 분 실행
 //     @Scheduled(fixedRate = 86400000) // 테스트용
      public void updateExceptionCaseStocks() throws Exception {

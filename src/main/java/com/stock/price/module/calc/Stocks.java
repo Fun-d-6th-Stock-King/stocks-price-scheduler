@@ -55,4 +55,6 @@ public class Stocks implements Serializable {
     @Column(name = "market")
     private String market;
 
+    @Column(name = "symbol")
+    private String symbol;
 }

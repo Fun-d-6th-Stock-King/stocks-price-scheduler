@@ -1,15 +1,13 @@
 package com.stock.price.module.calc;
 
-import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Calendar;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import com.stock.price.infra.CommonUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.Stock;
@@ -22,38 +20,45 @@ import yahoofinance.histquotes.Interval;
 public class HistoryService {
 
     @Autowired
-    private StocksPriceRepository stocksPriceRepository;
+    private StocksRepository stocksRepository;
     
     @Autowired
     private StockHistoryRepository stockHistoryRepository;
 
-    @Scheduled(fixedRate = 86400000) // 테스트용
+//    @Scheduled(fixedRate = 864000000) // 테스트용
+    @Scheduled(cron = "0 0 23 * * 1-5", zone = "Asia/Seoul")  // 평일 23시에 실행
     public void saveKospiHistory() throws Exception {
         
         LocalDate now = LocalDate.now();
         
-        List<StocksPrice> stockPriceList = stocksPriceRepository.findAllByIdNotIn(List.of(804L))
-            .orElseThrow(() -> new Exception("종목이 조회되지 않습니다."));
+        List<Stocks> stockslist = stocksRepository.findAll();
         
-        for (int i = 0; i < stockPriceList.size(); i++) {
+        for (int i = 0; i < stockslist.size(); i++) {
+            
+            // 2021-06-11 자 데이터 있으면 지나감.
+//            if(stockHistoryRepository
+//                .findByCodeAndDate(stockslist.get(i).getCode(), LocalDateTime.parse("2021-06-11T00:00:00"))
+//                .isPresent()) {
+//                continue;
+//            }
             
             try {
-                Stock stock = YahooFinance.get(stockPriceList.get(i).getCode()+".KS");
+                Stock stock = YahooFinance.get(stockslist.get(i).getSymbol());
                 
-                List<HistoricalQuote> hist = getHistory(stock, now.minusYears(20), now, Interval.DAILY);
+                List<HistoricalQuote> hist = CommonUtils.getHistory(stock, now.minusDays(5), now, Interval.DAILY);  // 5일치 가져다가 없는거 입력
                 
                 for (HistoricalQuote historicalQuote : hist) {
                     
                     Boolean isEmpty = stockHistoryRepository
-                            .findByCodeAndDate(stockPriceList.get(i).getCode(), convertDateTime(historicalQuote.getDate()))
+                            .findByCodeAndDate(stockslist.get(i).getCode(), CommonUtils.convertDateTime(historicalQuote.getDate()))
                             .isEmpty();
                     if(Boolean.TRUE.equals(isEmpty)) {
                         
                         try {
                             StockHistory stockHistory = StockHistory.builder()
-                                    .code(stockPriceList.get(i).getCode())
+                                    .code(stockslist.get(i).getCode())
                                     .adjClose(historicalQuote.getAdjClose())
-                                    .date(convertDateTime(historicalQuote.getDate()))
+                                    .date(CommonUtils.convertDateTime(historicalQuote.getDate()))
                                     .close(historicalQuote.getClose())
                                     .high(historicalQuote.getHigh())
                                     .low(historicalQuote.getLow())
@@ -64,48 +69,16 @@ public class HistoryService {
                             
                             stockHistoryRepository.save(stockHistory);
                         } catch (Exception e) {
-                            log.error("입력 실패 == " + stockPriceList.get(i).getCompany(), e);
+                            log.error("입력 실패 == " + stockslist.get(i).getCompany(), e);
                         }
                     }
                 }
             } catch (Exception e) {
-                log.error("조회 실패 == " + stockPriceList.get(i).getCompany(), e);
+                log.error("조회 실패 == " + stockslist.get(i).getCompany(), e);
             }
+            
+            Thread.sleep(2000);
         }
     }
 
-    /**
-     * LocalDate 객체를 Calendar 객체로 변화함
-     * @param localDate
-     * @return
-     */
-    public static Calendar convertCal(LocalDate localDate) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.clear();
-        calendar.set(localDate.getYear(), localDate.getMonthValue() - 1, localDate.getDayOfMonth());
-        return calendar;
-    }
-
-    /**
-     * Calendar 객체를 LocalDateTime 객체로 변화함
-     * @param calendar
-     * @return
-     */
-    public static LocalDateTime convertDateTime(Calendar calendar) {
-        return LocalDateTime.ofInstant(calendar.toInstant(), ZoneId.of("Asia/Seoul"));
-    }
-
-    /**
-     * LocalDate 객체를 사용하여 histortical 데이터를 가져옵니다
-     * @param stock
-     * @param from
-     * @param to
-     * @param interval
-     * @return
-     * @throws IOException
-     */
-    public static List<HistoricalQuote> getHistory(Stock stock, LocalDate from, LocalDate to, Interval interval)
-        throws IOException {
-        return stock.getHistory(convertCal(from), convertCal(to), interval);
-    }
 }
