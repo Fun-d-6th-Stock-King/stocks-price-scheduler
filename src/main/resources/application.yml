@@ -1,12 +1,6 @@
 spring:
   profiles:
     active: local
-  datasource:
-    hikari:
-      jdbc-url: jdbc:postgresql://13.124.97.47:5432/stocking 
-      username: stocking
-      password: stocking1234 
-      driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: true
     properties:
@@ -26,9 +20,21 @@ logging.level.yahoofinance.histquotes2.HistQuotes2Request: ERROR
 ---
 spring:
   profiles: local
+  datasource:
+    hikari:
+      jdbc-url: jdbc:postgresql://arjuna.db.elephantsql.com:5432/kfnzwjso
+      username: kfnzwjso
+      password: PN6khtXWIbRT_aeYwnMqSKFx81C8637B
+      driver-class-name: org.postgresql.Driver
   
 ---
 spring:
   profiles: production
   jpa:
     show-sql: false
+  datasource:
+    hikari:
+      jdbc-url: ${STOCKING_JDBC_URL}
+      username: ${STOCKING_USER}
+      password: ${STOCKING_PASSWORD}
+      driver-class-name: org.postgresql.Driver

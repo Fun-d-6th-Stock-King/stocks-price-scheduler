@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "logging.level.yahoofinance.histquotes2.HistQuotes2Request",
+  "type": "java.lang.String",
+  "description": "A description for 'logging.level.yahoofinance.histquotes2.HistQuotes2Request'"
+}]}
